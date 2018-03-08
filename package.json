@@ -1,31 +1,24 @@
 {
   "name": "onova.server.push",
   "version": "0.0.0",
-  "description": "",
+  "description": "Push notification server",
   "author": "Onova Team",
   "private": true,
   "main": "index.js",
   "scripts": {
-    "start": "node ./index.js",
+    "start": "yarn prod:build && yarn prod:start",
+    "dev:start": "nodemon --ignore lib --exec babel-node server",
+    "prod:build": "babel *.js -d lib --ignore .test.js",
+    "prod:start": "node lib/index.js",
     "lint": "eslint *.js --color",
     "test": "NODE_ENV=test jest",
     "test:coverage": "jest --coverage"
   },
-  "engineStrict": true,
-  "engines": {
-    "node": ">=8.9",
-    "npm": ">=5.6.0",
-    "yarn": ">=1.3.0"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://bitbucket.org/onova/server.push.git"
-  },
-  "jest": {
-    "verbose": true,
-    "forceExit": true
-  },
   "dependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-eslint": "^8.2.2",
+    "babel-preset-env": "^1.6.1",
+    "babel-preset-flow": "^6.23.0",
     "body-parser": "^1.18.2",
     "boom": "^7.2.0",
     "dotenv": "^5.0.1",
@@ -33,6 +26,7 @@
     "express-validator": "^5.0.3",
     "express-winston": "^2.5.0",
     "joi": "^13.1.2",
+    "mongoose": "^5.0.9",
     "morgan": "^1.9.0",
     "node-gcm": "^0.14.10",
     "raven": "^2.4.2",
@@ -47,5 +41,22 @@
     "jest": "^22.4.2",
     "prettier": "^1.11.1",
     "supertest": "^3.0.0"
+  },
+  "engineStrict": true,
+  "engines": {
+    "node": ">=8.9",
+    "npm": ">=5.6.0",
+    "yarn": ">=1.3.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://bitbucket.org/onova/server.push.git"
+  },
+  "jest": {
+    "verbose": true,
+    "forceExit": true,
+    "transform": {
+      ".js": "<rootDir>/node_modules/babel-jest"
+    }
   }
 }
