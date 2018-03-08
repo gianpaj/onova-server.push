@@ -1,0 +1,28 @@
+{
+  "extends": [
+    "prettier",
+    "prettier/flowtype"
+  ],
+  "plugins": [
+    "flowtype",
+    "prettier"
+  ],
+  "env": {
+    "es6": true,
+    "node": true,
+    "jest": true
+  },
+  "rules": {
+    "no-unused-vars": 1,
+    "prettier/prettier": [
+      "error",
+      {
+        "tabWidth": 2,
+        "printWidth": 80,
+        "singleQuote": true,
+        "jsxBracketSameLine": true,
+        "trailingComma": "es5"
+      }
+    ]
+  }
+}

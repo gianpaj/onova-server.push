@@ -1,0 +1,51 @@
+{
+  "name": "onova.server.push",
+  "version": "0.0.0",
+  "description": "",
+  "author": "Onova Team",
+  "private": true,
+  "main": "index.js",
+  "scripts": {
+    "start": "node ./index.js",
+    "lint": "eslint *.js --color",
+    "test": "NODE_ENV=test jest",
+    "test:coverage": "jest --coverage"
+  },
+  "engineStrict": true,
+  "engines": {
+    "node": ">=8.9",
+    "npm": ">=5.6.0",
+    "yarn": ">=1.3.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://bitbucket.org/onova/server.push.git"
+  },
+  "jest": {
+    "verbose": true,
+    "forceExit": true
+  },
+  "dependencies": {
+    "body-parser": "^1.18.2",
+    "boom": "^7.2.0",
+    "dotenv": "^5.0.1",
+    "express": "^4.16.2",
+    "express-validator": "^5.0.3",
+    "express-winston": "^2.5.0",
+    "joi": "^13.1.2",
+    "morgan": "^1.9.0",
+    "node-gcm": "^0.14.10",
+    "raven": "^2.4.2",
+    "shortid": "^2.2.8",
+    "winston": "^2.4.0"
+  },
+  "devDependencies": {
+    "eslint": "^4.18.2",
+    "eslint-config-prettier": "^2.9.0",
+    "eslint-plugin-prettier": "^2.6.0",
+    "flow-bin": "^0.66.0",
+    "jest": "^22.4.2",
+    "prettier": "^1.11.1",
+    "supertest": "^3.0.0"
+  }
+}
