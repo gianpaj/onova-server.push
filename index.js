@@ -11,7 +11,10 @@ const JOBNAMES = {
 
 const logger = winston.createLogger({
   level: 'info',
-  format: winston.format.combine(winston.format.timestamp(), winston.format.json()),
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.json()
+  ),
   transports: [
     //
     // - Write to all logs with level `info` and below to `combined.log`
@@ -19,6 +22,9 @@ const logger = winston.createLogger({
     //
     new winston.transports.File({ filename: 'error.log', level: 'error' }),
     new winston.transports.File({ filename: 'combined.log' }),
+  ],
+  exceptionHandlers: [
+    new winston.transports.File({ filename: 'exceptions.log' })
   ],
 });
 
@@ -57,15 +63,16 @@ const sender = new gcm.Sender(config.FCM_SERVER_KEY);
 
 if (config.NODE_ENV == 'production') {
   // Raven.config(config.SENTRY_KEY, {
-    //   captureUnhandledRejections: true,
-    // }).install();
-    Raven.on('logged', () => {
-      logger.info('raven event sent');
-    });
+  //   captureUnhandledRejections: true,
+  // }).install();
+  Raven.on('logged', () => {
+    logger.info('raven event sent');
+  });
 } else {
   logger.add(
     new winston.transports.Console({
       format: winston.format.simple(),
+      handleExceptions: true,
     })
   );
 }
