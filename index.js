@@ -97,7 +97,15 @@ agenda.on('error', () => {
 });
 
 agenda.define(JOBNAMES.PUSHCOMMENTS, (job, done) => {
-  const { message, productUuid, pushToken, senderName } = job.attrs.data;
+  const {
+    message,
+    platform,
+    productUuid,
+    pushToken,
+    senderId, // TODO: check if it's not banned
+    senderName,
+    targetId, // TODO: check user preference, and it's not banned
+  } = job.attrs.data;
 
   if (!pushToken || !message || !productUuid || !senderName) {
     logger.error('incorrect data');
@@ -106,12 +114,12 @@ agenda.define(JOBNAMES.PUSHCOMMENTS, (job, done) => {
   }
 
   let notification = {};
-  // if (platform == 'ios') {
-  //   notification = {
-  //     title: senderName,
-  //     body: message,
-  //   };
-  // }
+  if (platform == 'ios') {
+    notification = {
+      title: senderName,
+      body: message,
+    };
+  }
 
   // Prepare a message to be sent
   let push = new gcm.Message({
