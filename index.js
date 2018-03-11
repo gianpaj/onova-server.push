@@ -137,6 +137,7 @@ agenda.define(JOBNAMES.PUSHCOMMENTS, (job, done) => {
     title: senderName,
     body: message,
     icon: 'notification_icon',
+    sound: 'default', // vibrate
   });
 
   // Specify which registration IDs to deliver the message to
