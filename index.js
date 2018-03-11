@@ -2,24 +2,26 @@
 
 const gcm = require('node-gcm');
 const Agenda = require('agenda');
-const util = require('util');
-const Boom = require('boom');
 const Raven = require('raven');
-const shortid = require('shortid');
 const winston = require('winston');
 
 const JOBNAMES = {
   PUSHCOMMENTS: 'send-push-comments',
 };
 
-const winstonInstance = new winston.Logger({
+const logger = winston.createLogger({
+  level: 'info',
+  format: winston.format.combine(winston.format.timestamp(), winston.format.json()),
   transports: [
-    new winston.transports.Console({
-      json: true,
-      colorize: true,
-    }),
+    //
+    // - Write to all logs with level `info` and below to `combined.log`
+    // - Write all logs error (and below) to `error.log`.
+    //
+    new winston.transports.File({ filename: 'error.log', level: 'error' }),
+    new winston.transports.File({ filename: 'combined.log' }),
   ],
 });
+
 const Joi = require('joi');
 require('dotenv').config();
 
@@ -53,35 +55,33 @@ const agenda = new Agenda({
 });
 const sender = new gcm.Sender(config.FCM_SERVER_KEY);
 
-if (config.NODE_ENV === 'production') {
+if (config.NODE_ENV == 'production') {
   // Raven.config(config.SENTRY_KEY, {
-  //   captureUnhandledRejections: true,
-  // }).install();
-  Raven.on('logged', () => {
-    console.log('raven event sent');
-  });
+    //   captureUnhandledRejections: true,
+    // }).install();
+    Raven.on('logged', () => {
+      logger.info('raven event sent');
+    });
+} else {
+  logger.add(
+    new winston.transports.Console({
+      format: winston.format.simple(),
+    })
+  );
 }
-
-if (config.NODE_ENV === 'production') {
-  app.use(Raven.errorHandler());
-}
-
-agenda.on(`start:${JOBNAMES.PUSHCOMMENTS}`, job => {
-  console.log('Job %s starting', job.attrs.name);
-});
 
 agenda.on('complete', job => {
-  console.log('Job %s finished', job.attrs.name);
+  logger.info(job.attrs.data);
+  logger.info(`Job ${job.attrs.name} finished`);
 });
 
 agenda.on('fail', (err, job) => {
-  console.log('Job failed with error: %s', err.message);
-  console.log(job);
+  logger.error(`Job failed with error: ${err.message}`);
+
+  logger.error(job);
 });
 
 agenda.on('ready', () => {
-  agenda.every('3 seconds', JOBNAMES.PUSHCOMMENTS);
-
   agenda.start();
 });
 
@@ -93,21 +93,10 @@ agenda.define(JOBNAMES.PUSHCOMMENTS, (job, done) => {
   const { message, productUuid, pushToken, senderName } = job.attrs.data;
 
   if (!pushToken || !message || !productUuid || !senderName) {
-    console.error('incorrect data');
-    console.error(job.attrs.data);
+    logger.error('incorrect data');
+    logger.error(job.attrs.data);
     throw new Error(`incorrect data: ${JSON.stringify(job.attrs.data)}`);
   }
-
-  // req.checkBody('productUuid', 'Invalid productUuid').isValidId();
-  // req
-  //   .checkBody('targetId', 'Invalid targetId')
-  //   .notEmpty()
-  //   .isInt();
-  // req.checkBody('senderName', 'Invalid senderName').notEmpty();
-  // req.checkBody('message', 'Invalid message').notEmpty();
-  // req.checkBody('pushToken', 'Invalid pushToken').notEmpty();
-
-  // console.log(req.body);
 
   let notification = {};
   // if (platform == 'ios') {
@@ -140,11 +129,11 @@ agenda.define(JOBNAMES.PUSHCOMMENTS, (job, done) => {
 
   sender.send(push, { registrationTokens: regTokens }, (err, response) => {
     if (err) {
-      console.error(err);
+      logger.error(err);
       throw new Error(err);
     }
     if (response.failure) {
-      console.error(response);
+      logger.error(response);
     }
     done();
   });
@@ -152,7 +141,7 @@ agenda.define(JOBNAMES.PUSHCOMMENTS, (job, done) => {
 
 function graceful() {
   agenda.stop(() => {
-    console.log('agenda stopped gracefully');
+    logger.info('agenda stopped gracefully');
     process.exit(0);
   });
 }
