@@ -1,8 +1,12 @@
 # Onova Push notifications Server
 
-To enable debug mode (print requests and responses to and from GCM), set:
+To debug GCM push notifications:
 
-    DEBUG=node-gcm node app.js
+    DEBUG=node-gcm node index.js
+
+To debug the scheduled jobs agenda:
+
+    DEBUG="agenda:*" node index.js
 
 ## Getting Started
 
@@ -18,7 +22,7 @@ Install dependencies:
 yarn
 ```
 
-Set environment vars:
+Set environment vars based on the example file:
 
 ```sh
 cp .env.example .env

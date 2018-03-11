@@ -1,16 +1,16 @@
 // @flow
 
 const gcm = require('node-gcm');
-const express = require('express');
-const expressValidator = require('express-validator');
+const Agenda = require('agenda');
 const util = require('util');
 const Boom = require('boom');
-const bodyParser = require('body-parser');
 const Raven = require('raven');
 const shortid = require('shortid');
 const winston = require('winston');
-const expressWinston = require('express-winston');
-const morgan = require('morgan');
+
+const JOBNAMES = {
+  PUSHCOMMENTS: 'send-push-comments',
+};
 
 const winstonInstance = new winston.Logger({
   transports: [
@@ -44,132 +44,118 @@ if (error) {
   throw new Error(`Config validation error: ${error.message}`);
 }
 
+const agenda = new Agenda({
+  db: {
+    address: config.MONGO_URI,
+    maxConcurrency: 2,
+    defaultLockLifetime: 5000, // seconds
+  },
+});
 const sender = new gcm.Sender(config.FCM_SERVER_KEY);
-const app = express();
-const API = '/api/v1';
-
-if (config.NODE_ENV === 'development') {
-  app.use(morgan('dev'));
-
-  // enable detailed API logging in dev env
-  expressWinston.requestWhitelist.push('body');
-  expressWinston.responseWhitelist.push('body');
-  app.use(
-    expressWinston.logger({
-      winstonInstance,
-      meta: true, // optional: log meta data about request (defaults to true)
-      msg:
-        'HTTP {{req.method}} {{req.url}} {{res.statusCode}} {{res.responseTime}}ms',
-      colorize: true, // Color the status code (default green, 3XX cyan, 4XX yellow, 5XX red).
-    })
-  );
-}
-
-app.listen(config.PORT, () =>
-  console.log(`Push server is listening on port ${config.PORT}`)
-);
 
 if (config.NODE_ENV === 'production') {
   // Raven.config(config.SENTRY_KEY, {
   //   captureUnhandledRejections: true,
   // }).install();
-  app.use(Raven.requestHandler());
-  Raven.on('logged', function() {
+  Raven.on('logged', () => {
     console.log('raven event sent');
   });
 }
-
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(
-  expressValidator({
-    customValidators: {
-      isValidId: value => shortid.isValid(value),
-    },
-  })
-);
-
-app.post(`${API}/push`, push);
 
 if (config.NODE_ENV === 'production') {
   app.use(Raven.errorHandler());
 }
 
-// log error in winston transports except when executing test suite
-if (config.NODE_ENV !== 'test') {
-  app.use(
-    expressWinston.errorLogger({
-      winstonInstance,
-    })
-  );
-}
+agenda.on(`start:${JOBNAMES.PUSHCOMMENTS}`, job => {
+  console.log('Job %s starting', job.attrs.name);
+});
 
-function push(req, res) {
-  req.checkBody('productUuid', 'Invalid productUuid').isValidId();
-  req
-    .checkBody('targetId', 'Invalid targetId')
-    .notEmpty()
-    .isInt();
-  req.checkBody('senderName', 'Invalid senderName').notEmpty();
-  req.checkBody('message', 'Invalid message').notEmpty();
-  req.checkBody('pushToken', 'Invalid pushToken').notEmpty();
+agenda.on('complete', job => {
+  console.log('Job %s finished', job.attrs.name);
+});
 
-  req.getValidationResult().then(result => {
-    if (!result.isEmpty()) {
-      const error = Boom.badRequest(
-        util.inspect(result.array()),
-        result.array()
-      );
-      console.log(error);
-      return res.status(400).json(error);
-    }
+agenda.on('fail', (err, job) => {
+  console.log('Job failed with error: %s', err.message);
+  console.log(job);
+});
 
-    const {
-      message,
-      platform,
-      productUuid,
-      pushToken,
-      senderName,
-      targetId,
-    } = req.body;
+agenda.on('ready', () => {
+  agenda.every('3 seconds', JOBNAMES.PUSHCOMMENTS);
 
-    // console.log(req.body);
+  agenda.start();
+});
 
-    let notification = {};
-    if (platform == 'ios') {
-      notification = {
-        title: senderName,
-        body: message,
-      };
-    }
+agenda.on('error', () => {
+  agenda.start();
+});
 
-    // Prepare a message to be sent
-    let push = new gcm.Message({
-      data: {
-        productUuid: productUuid,
-        targetId: targetId,
-        title: senderName,
-        body: message,
-        priority: 2,
-      },
-      // priority: 'high',
-      notification: notification,
-    });
+agenda.define(JOBNAMES.PUSHCOMMENTS, (job, done) => {
+  const { message, productUuid, pushToken, senderName } = job.attrs.data;
 
-    push.addNotification({
+  if (!pushToken || !message || !productUuid || !senderName) {
+    console.error('incorrect data');
+    console.error(job.attrs.data);
+    throw new Error(`incorrect data: ${JSON.stringify(job.attrs.data)}`);
+  }
+
+  // req.checkBody('productUuid', 'Invalid productUuid').isValidId();
+  // req
+  //   .checkBody('targetId', 'Invalid targetId')
+  //   .notEmpty()
+  //   .isInt();
+  // req.checkBody('senderName', 'Invalid senderName').notEmpty();
+  // req.checkBody('message', 'Invalid message').notEmpty();
+  // req.checkBody('pushToken', 'Invalid pushToken').notEmpty();
+
+  // console.log(req.body);
+
+  let notification = {};
+  // if (platform == 'ios') {
+  //   notification = {
+  //     title: senderName,
+  //     body: message,
+  //   };
+  // }
+
+  // Prepare a message to be sent
+  let push = new gcm.Message({
+    data: {
+      productUuid: productUuid,
       title: senderName,
       body: message,
-      icon: 'notification_icon',
-    });
+      priority: 2,
+    },
+    // priority: 'high',
+    notification: notification,
+  });
 
-    // Specify which registration IDs to deliver the message to
-    const regTokens = [pushToken];
+  push.addNotification({
+    title: senderName,
+    body: message,
+    icon: 'notification_icon',
+  });
 
-    sender.send(push, { registrationTokens: regTokens }, (err, response) => {
-      if (err) console.error(err);
-      else console.log(response);
-    });
+  // Specify which registration IDs to deliver the message to
+  const regTokens = [pushToken];
 
-    res.status(200).end();
+  sender.send(push, { registrationTokens: regTokens }, (err, response) => {
+    if (err) {
+      console.error(err);
+      throw new Error(err);
+    }
+    if (response.failure) {
+      console.error(response);
+    }
+    done();
+  });
+});
+
+function graceful() {
+  agenda.stop(() => {
+    console.log('agenda stopped gracefully');
+    process.exit(0);
   });
 }
+
+process.on('SIGTERM', graceful);
+process.on('SIGINT', graceful);
