@@ -6,7 +6,9 @@ const Raven = require('raven');
 const winston = require('winston');
 
 const JOBNAMES = {
-  PUSHCOMMENTS: 'send-push-comments',
+  PUSHCOMMENT: 'send-push-comment',
+  PUSHFOLLOW: 'send-push-follow',
+  PUSHORDER: 'send-push-order',
 };
 
 const logger = winston.createLogger({
@@ -24,7 +26,7 @@ const logger = winston.createLogger({
     new winston.transports.File({ filename: 'combined.log' }),
   ],
   exceptionHandlers: [
-    new winston.transports.File({ filename: 'exceptions.log' })
+    new winston.transports.File({ filename: 'exceptions.log' }),
   ],
 });
 
@@ -96,21 +98,28 @@ agenda.on('error', () => {
   agenda.start();
 });
 
-agenda.define(JOBNAMES.PUSHCOMMENTS, (job, done) => {
+function sendPush(job, done, withSenderName = true) {
   const {
     message,
     platform,
-    productUuid,
     pushToken,
-    senderId, // TODO: check if it's not banned
+    triggeredBy,
+    triggeredType,
+    senderId, // TODO: check if user is not banned
     senderName,
-    targetId, // TODO: check user preference, and it's not banned
+    targetUser, // TODO: check push notification user preference, and it's not banned
   } = job.attrs.data;
 
-  if (!pushToken || !message || !productUuid || !senderName) {
-    logger.error('incorrect data');
+  if (withSenderName && !senderName) {
+    logger.error('invalid data');
     logger.error(job.attrs.data);
-    throw new Error(`incorrect data: ${JSON.stringify(job.attrs.data)}`);
+    throw new Error(`invalid data: ${JSON.stringify(job.attrs.data)}`);
+  }
+
+  if (!message || !pushToken || !triggeredBy) {
+    logger.error('invalid data');
+    logger.error(job.attrs.data);
+    throw new Error(`invalid data: ${JSON.stringify(job.attrs.data)}`);
   }
 
   let notification = {};
@@ -124,7 +133,8 @@ agenda.define(JOBNAMES.PUSHCOMMENTS, (job, done) => {
   // Prepare a message to be sent
   let push = new gcm.Message({
     data: {
-      productUuid: productUuid,
+      triggeredBy,
+      triggeredType,
       title: senderName,
       body: message,
       priority: 2,
@@ -143,6 +153,11 @@ agenda.define(JOBNAMES.PUSHCOMMENTS, (job, done) => {
   // Specify which registration IDs to deliver the message to
   const regTokens = [pushToken];
 
+  if (config.NODE_ENV == 'test') {
+    logger.info(push);
+    return done();
+  }
+
   sender.send(push, { registrationTokens: regTokens }, (err, response) => {
     if (err) {
       logger.error(err);
@@ -153,6 +168,13 @@ agenda.define(JOBNAMES.PUSHCOMMENTS, (job, done) => {
     }
     done();
   });
+}
+
+agenda.define(JOBNAMES.PUSHCOMMENT, sendPush);
+agenda.define(JOBNAMES.PUSHFOLLOW, sendPush);
+agenda.define(JOBNAMES.PUSHORDER, (job, done) => {
+  const withSenderName = false;
+  sendPush(job, done, withSenderName);
 });
 
 function graceful() {
