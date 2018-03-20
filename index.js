@@ -173,8 +173,7 @@ function sendPush(job, done, withSenderName = true) {
 agenda.define(JOBNAMES.PUSHCOMMENT, sendPush);
 agenda.define(JOBNAMES.PUSHFOLLOW, sendPush);
 agenda.define(JOBNAMES.PUSHORDER, (job, done) => {
-  const withSenderName = false;
-  sendPush(job, done, withSenderName);
+  sendPush(job, done, (withSenderName = false));
 });
 
 function graceful() {
