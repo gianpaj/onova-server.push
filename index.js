@@ -38,7 +38,6 @@ const envVarsSchema = Joi.object({
   NODE_ENV: Joi.string()
     .allow(['development', 'production', 'test', 'stage'])
     .default('development'),
-  PORT: Joi.number().default(3030),
   FCM_SERVER_KEY: Joi.string()
     .required()
     .description('Firebase Cloud Messaging (FCM) key'),
