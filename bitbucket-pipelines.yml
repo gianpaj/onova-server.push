@@ -1,0 +1,29 @@
+# This is a sample build configuration for JavaScript.
+# Check our guides at https://confluence.atlassian.com/x/14UWN for more examples.
+# Only use spaces to indent your .yml configuration.
+# -----
+# You can specify a custom docker image from Docker Hub as your build environment.
+# image: node:8
+
+options:
+  max-time: 60
+
+clone:           # the 'clone' section
+  depth: 1       # the depth, in this case the clone will contain last commit
+
+pipelines:
+  branches:
+    master:
+      - step:
+          # caches:
+          #   - node
+          script:
+            - >
+              ssh bitbucket@direct.onova.co /bin/bash << EOF
+                echo "connected to `hostname` as $USER";
+                cd /var/www/server.push &&
+                git fetch &&
+                git reset --hard origin/master &&
+                yarn &&
+                pm2 restart server.push --silent --no-color;
+              EOF
