@@ -7,7 +7,7 @@
   "main": "index.js",
   "scripts": {
     "start": "yarn prod:build && yarn prod:start",
-    "dev:start": "nodemon --ignore lib --exec babel-node server",
+    "dev:start": "nodemon --ignore lib --exec babel-node index",
     "prod:build": "babel *.js -d lib --ignore .test.js",
     "prod:start": "node lib/index.js",
     "lint": "eslint *.js --color",

@@ -44,13 +44,18 @@ const envVarsSchema = Joi.object({
   SENTRY_KEY: Joi.string()
     .required()
     .description('Sentry API KEY'),
+  MONGO_URI: Joi.string()
+    .required()
+    .description('MongoDB URI'),
 })
   .unknown()
   .required();
 
 const { error, value: config } = Joi.validate(process.env, envVarsSchema);
 if (error) {
-  throw new Error(`Config validation error: ${error.message}`);
+  const err = new Error(`Config validation error: ${error.message}`);
+  console.error(err);
+  throw err;
 }
 
 const agenda = new Agenda({
