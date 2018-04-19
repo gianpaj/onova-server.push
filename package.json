@@ -23,10 +23,8 @@
     "dotenv": "^5.0.1",
     "eslint-plugin-flowtype": "^2.46.1",
     "joi": "^13.1.2",
-    "mongoose": "^5.0.9",
     "node-gcm": "^0.14.10",
     "raven": "^2.4.2",
-    "shortid": "^2.2.8",
     "winston": "^3.0.0-rc1"
   },
   "devDependencies": {
