@@ -25,6 +25,7 @@
     "joi": "^13.1.2",
     "node-gcm": "^0.14.10",
     "raven": "^2.4.2",
+    "shortid": "^2.2.8",
     "winston": "^3.0.0-rc1"
   },
   "devDependencies": {
