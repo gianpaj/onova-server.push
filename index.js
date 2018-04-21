@@ -4,12 +4,62 @@ const gcm = require('node-gcm');
 const Agenda = require('agenda');
 const Raven = require('raven');
 const winston = require('winston');
+import mongoose from 'mongoose';
+import User, { UserDoc } from './user.model';
+
+const Joi = require('joi');
+require('dotenv').config();
+
+// define validation for all the env vars
+const envVarsSchema = Joi.object({
+  NODE_ENV: Joi.string()
+    .allow(['development', 'production', 'test', 'stage'])
+    .default('development'),
+  FCM_SERVER_KEY: Joi.string()
+    .required()
+    .description('Firebase Cloud Messaging (FCM) key'),
+  SENTRY_KEY: Joi.string()
+    .required()
+    .description('Sentry API KEY'),
+  MONGO_URI_AGENDA: Joi.string()
+    .required()
+    .description('MongoDB URI for Agenda jobs'),
+  MONGO_URI_DATA: Joi.string()
+    .required()
+    .description('MongoDB URI'),
+})
+  .unknown()
+  .required();
+
+const { error, value: config } = Joi.validate(process.env, envVarsSchema);
+if (error) {
+  const err = new Error(`Config validation error: ${error.message}`);
+  console.error(err);
+  throw err;
+}
 
 const JOBNAMES = {
-  PUSHCOMMENT: 'send-push-comment',
-  PUSHFOLLOW: 'send-push-follow',
+  PUSH_COMMENT: 'send-push-comment',
+  PUSH_FOLLOW: 'send-push-follow',
   PUSHORDER: 'send-push-order',
+  PUSH_MSG: 'send-push-msg', // person to person
 };
+
+mongoose.connect(config.MONGO_URI_DATA, { keepAlive: 1 }).then(
+  () => {
+    console.log(`connected to ${config.MONGO_URI_DATA}`);
+  },
+  err => {
+    throw new Error(`unable to connect to: ${config.MONGO_URI_DATA} - ${err}`);
+  }
+);
+
+// print mongoose logs in dev env
+if (config.NODE_ENV !== 'production') {
+  mongoose.set('debug', (collectionName, method, query, doc) => {
+    console.log(`${collectionName}.${method}`, query, doc);
+  });
+}
 
 const logger = winston.createLogger({
   level: 'info',
@@ -30,37 +80,9 @@ const logger = winston.createLogger({
   ],
 });
 
-const Joi = require('joi');
-require('dotenv').config();
-
-// define validation for all the env vars
-const envVarsSchema = Joi.object({
-  NODE_ENV: Joi.string()
-    .allow(['development', 'production', 'test', 'stage'])
-    .default('development'),
-  FCM_SERVER_KEY: Joi.string()
-    .required()
-    .description('Firebase Cloud Messaging (FCM) key'),
-  SENTRY_KEY: Joi.string()
-    .required()
-    .description('Sentry API KEY'),
-  MONGO_URI: Joi.string()
-    .required()
-    .description('MongoDB URI'),
-})
-  .unknown()
-  .required();
-
-const { error, value: config } = Joi.validate(process.env, envVarsSchema);
-if (error) {
-  const err = new Error(`Config validation error: ${error.message}`);
-  console.error(err);
-  throw err;
-}
-
 const agenda = new Agenda({
   db: {
-    address: config.MONGO_URI,
+    address: config.MONGO_URI_AGENDA,
     maxConcurrency: 2,
     defaultLockLifetime: 5000, // seconds
   },
@@ -165,17 +187,18 @@ function sendPush(job, done, withSenderName = true) {
   sender.send(push, { registrationTokens: regTokens }, (err, response) => {
     if (err) {
       logger.error(err);
-      throw new Error(err);
+      return done(new Error(err));
     }
     if (response.failure) {
       logger.error(response);
+      return done(response);
     }
     done();
   });
 }
 
-agenda.define(JOBNAMES.PUSHCOMMENT, sendPush);
-agenda.define(JOBNAMES.PUSHFOLLOW, sendPush);
+agenda.define(JOBNAMES.PUSH_COMMENT, sendPush);
+agenda.define(JOBNAMES.PUSH_FOLLOW, sendPush);
 agenda.define(JOBNAMES.PUSHORDER, (job, done) => {
   sendPush(job, done, (withSenderName = false));
 });
