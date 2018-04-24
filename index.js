@@ -117,7 +117,20 @@ agenda.on('fail', (err, job) => {
 });
 
 agenda.on('ready', () => {
-  agenda.start();
+  agenda._collection.createIndex(
+    {
+      notification_id: 1,
+    },
+    err => {
+      if (err) {
+        console.log('Failed to create Agenda index!');
+        console.error(err);
+        throw new Error(err);
+      }
+      agenda.start();
+      console.log('Agenda index created.');
+    }
+  );
 });
 
 agenda.on('error', () => {
