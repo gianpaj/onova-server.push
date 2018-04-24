@@ -197,6 +197,32 @@ function sendPush(job, done, withSenderName = true) {
   });
 }
 
+agenda.define(JOBNAMES.PUSH_MSG, (job, done) => {
+  // const second_in_a_day = 86400;
+  const {
+    message,
+    title,
+    // senderId, // TODO: check if user is not banned
+    senderName,
+    targetUser, // TODO: check push notification user preference, and it's not banned
+  } = job.attrs.data;
+
+  if (!targetUser || !senderName || !title || !message) {
+    logger.error('job has invalid data');
+    logger.error(job.attrs.data);
+    throw new Error(`invalid data: ${JSON.stringify(job.attrs.data)}`);
+  }
+
+  User.findById(targetUser)
+    .then((u: UserDoc) => {
+      if (!u) {
+        throw new Error(`no user found for ${targetUser}`);
+      }
+      console.log(u);
+    })
+    .catch(e => console.error(e));
+  done();
+});
 agenda.define(JOBNAMES.PUSH_COMMENT, sendPush);
 agenda.define(JOBNAMES.PUSH_FOLLOW, sendPush);
 agenda.define(JOBNAMES.PUSHORDER, (job, done) => {
