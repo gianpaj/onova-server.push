@@ -202,6 +202,7 @@ agenda.define(JOBNAMES.PUSH_MSG, (job, done) => {
   const {
     message,
     title,
+    triggeredType,
     // senderId, // TODO: check if user is not banned
     senderName,
     targetUser, // TODO: check push notification user preference, and it's not banned
@@ -218,10 +219,54 @@ agenda.define(JOBNAMES.PUSH_MSG, (job, done) => {
       if (!u) {
         throw new Error(`no user found for ${targetUser}`);
       }
-      console.log(u);
+      let notification = {};
+      if (u.platform == 'ios') {
+        notification = {
+          title: senderName,
+          body: message,
+        };
+      }
+
+      // Prepare a message to be sent
+      let push = new gcm.Message({
+        data: {
+          triggeredType,
+          title: senderName,
+          body: message,
+          priority: 2,
+        },
+        // priority: 'high',
+        notification,
+      });
+
+      push.addNotification({
+        title: senderName,
+        body: message,
+        icon: 'notification_icon',
+        sound: 'default', // vibrate
+      });
+
+      // Specify which registration IDs to deliver the message to
+      const regTokens = [u.pushToken];
+
+      if (config.NODE_ENV == 'test') {
+        logger.info(push);
+        return done();
+      }
+
+      sender.send(push, { registrationTokens: regTokens }, (err, response) => {
+        if (err) {
+          logger.error(err);
+          return done(new Error(err));
+        }
+        if (response.failure) {
+          logger.error(response);
+          return done(response);
+        }
+        done();
+      });
     })
     .catch(e => console.error(e));
-  done();
 });
 agenda.define(JOBNAMES.PUSH_COMMENT, sendPush);
 agenda.define(JOBNAMES.PUSH_FOLLOW, sendPush);
