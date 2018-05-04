@@ -141,12 +141,13 @@ function sendPush(job, done, withSenderName = true) {
   const {
     message,
     platform,
+    productUuid, // for comments
     pushToken,
-    triggeredBy,
-    triggeredType,
     senderId, // TODO: check if user is not banned
     senderName,
     targetUser, // TODO: check push notification user preference, and it's not banned
+    triggeredBy,
+    triggeredType,
   } = job.attrs.data;
 
   if (withSenderName && !senderName) {
@@ -177,6 +178,7 @@ function sendPush(job, done, withSenderName = true) {
       title: senderName,
       body: message,
       priority: 2,
+      productUuid,
     },
     // priority: 'high',
     notification: notification,
