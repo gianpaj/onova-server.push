@@ -217,13 +217,14 @@ agenda.define(JOBNAMES.PUSH_MSG, (job, done) => {
   const {
     message,
     // title,
-    triggeredType,
-    // senderId, // TODO: check if user is not banned
-    senderName,
     targetUser, // TODO: check push notification user preference, and it's not banned
+    triggeredType,
+    triggeredBy,
+    senderName,
+    // senderId, // TODO: check if user is not banned
   } = job.attrs.data;
 
-  if (!targetUser || !senderName || !message) {
+  if (!targetUser || !senderName || !message || !triggeredBy) {
     logger.error('job has invalid data');
     logger.error(job.attrs.data);
     throw new Error(`invalid data: ${JSON.stringify(job.attrs.data)}`);
@@ -246,6 +247,7 @@ agenda.define(JOBNAMES.PUSH_MSG, (job, done) => {
       let push = new gcm.Message({
         data: {
           triggeredType,
+          triggeredBy,
           title: senderName,
           body: message,
           priority: 2,
