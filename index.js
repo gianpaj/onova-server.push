@@ -235,15 +235,15 @@ agenda.define(JOBNAMES.PUSH_MSG, (job, done) => {
         throw new Error(`no user found for ${targetUser}`);
       }
 
-      const sender = await User.findById(senderId);
+      const senderUser = await User.findById(senderId);
 
-      if (!sender) {
+      if (!senderUser) {
         throw new Error(`no user found for ${senderId}`);
       }
       let notification = {};
       if (u.platform == 'ios') {
         notification = {
-          title: sender.username,
+          title: senderUser.username,
           body: message,
         };
       }
@@ -253,7 +253,7 @@ agenda.define(JOBNAMES.PUSH_MSG, (job, done) => {
         data: {
           triggeredType,
           triggeredBy,
-          title: sender.username,
+          title: senderUser.username,
           body: message,
           priority: 2,
         },
@@ -262,7 +262,7 @@ agenda.define(JOBNAMES.PUSH_MSG, (job, done) => {
       });
 
       push.addNotification({
-        title: sender.username,
+        title: senderUser.username,
         body: message,
         icon: 'notification_icon',
         sound: 'default', // vibrate
