@@ -220,25 +220,30 @@ agenda.define(JOBNAMES.PUSH_MSG, (job, done) => {
     targetUser, // TODO: check push notification user preference, and it's not banned
     triggeredType,
     triggeredBy,
-    senderName,
-    // senderId, // TODO: check if user is not banned
+    senderId, // TODO: check if user is not banned
   } = job.attrs.data;
 
-  if (!targetUser || !senderName || !message || !triggeredBy) {
+  if (!targetUser || !message || !triggeredBy || !senderId) {
     logger.error('job has invalid data');
     logger.error(job.attrs.data);
     throw new Error(`invalid data: ${JSON.stringify(job.attrs.data)}`);
   }
 
   User.findById(targetUser)
-    .then((u: UserDoc) => {
+    .then(async (u: UserDoc) => {
       if (!u) {
         throw new Error(`no user found for ${targetUser}`);
+      }
+
+      const sender = await User.findById(senderId);
+
+      if (!sender) {
+        throw new Error(`no user found for ${senderId}`);
       }
       let notification = {};
       if (u.platform == 'ios') {
         notification = {
-          title: senderName,
+          title: sender.username,
           body: message,
         };
       }
@@ -248,7 +253,7 @@ agenda.define(JOBNAMES.PUSH_MSG, (job, done) => {
         data: {
           triggeredType,
           triggeredBy,
-          title: senderName,
+          title: sender.username,
           body: message,
           priority: 2,
         },
@@ -257,7 +262,7 @@ agenda.define(JOBNAMES.PUSH_MSG, (job, done) => {
       });
 
       push.addNotification({
-        title: senderName,
+        title: sender.username,
         body: message,
         icon: 'notification_icon',
         sound: 'default', // vibrate
