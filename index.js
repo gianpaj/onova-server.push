@@ -1,11 +1,12 @@
 // @flow
 
 const gcm = require('node-gcm');
-const Agenda = require('agenda');
 const Raven = require('raven');
-const winston = require('winston');
+import Agenda from 'agenda';
+import winston from 'winston';
 import mongoose from 'mongoose';
 import User, { UserDoc } from './user.model';
+import fbgraph from 'fbgraph';
 
 const Joi = require('joi');
 require('dotenv').config();
@@ -27,6 +28,14 @@ const envVarsSchema = Joi.object({
   MONGO_URI_DATA: Joi.string()
     .required()
     .description('MongoDB URI'),
+  FACEBOOK_APP_ID: Joi.string()
+    .required()
+    .description(
+      'Facebook APP ID for Login? and Posting item on sellers` walls'
+    ),
+  FACEBOOK_APP_SECRET: Joi.string()
+    .required()
+    .description('Facebook APP Secret'),
 })
   .unknown()
   .required();
@@ -43,6 +52,7 @@ const JOBNAMES = {
   PUSH_FOLLOW: 'send-push-follow',
   PUSHORDER: 'send-push-order',
   PUSH_MSG: 'send-push-msg', // person to person
+  SCHEDULE: 'listing-schedule',
 };
 
 mongoose.connect(config.MONGO_URI_DATA, { keepAlive: 1 }).then(
@@ -294,6 +304,79 @@ agenda.define(JOBNAMES.PUSH_COMMENT, sendPush);
 agenda.define(JOBNAMES.PUSH_FOLLOW, sendPush);
 agenda.define(JOBNAMES.PUSHORDER, (job, done) => {
   sendPush(job, done, (withSenderName = false));
+});
+
+agenda.define(JOBNAMES.SCHEDULE, async (job: Agenda.Job<any>, done) => {
+  const { data } = job.attrs;
+
+  if (data.socials.includes('fb')) {
+    const user = await User.findById(data.product.seller);
+    console.log(user.tokens);
+    const accessToken = user.tokens.find(t => t.kind === 'fb').accessToken;
+    fbgraph.setVersion('2.11');
+    fbgraph.setAccessToken(accessToken);
+    // fbgraph.extendAccessToken(
+    //   {
+    //     access_token: accessToken,
+    //     client_id: config.FACEBOOK_APP_ID,
+    //     client_secret: config.FACEBOOK_APP_SECRET,
+    //   },
+    //   (err, facebookRes) => {
+    //     if (err) {
+    //       console.error(err);
+    //       return done(err);
+    //     }
+    //     console.log(facebookRes);
+    //   }
+    // );
+
+    // remove thumb
+    const images = data.product.photoURIs.filter(i => !i.includes('thumb.jpg'));
+
+    let imageIds = [];
+    let todo = images.length;
+    if (!todo) return done(new Error('no images'));
+
+    images.forEach(image => {
+      fbgraph.post(
+        '/me/photos',
+        { published: false, url: image },
+        (err, res) => {
+          if (err) {
+            console.error(err);
+            return done(err);
+          }
+          imageIds.push(res.id);
+          if (--todo === 0) {
+            let wallPost = {
+              message: data.product.description,
+              attached_media: imageIds.map(id => ({
+                media_fbid: id,
+              })),
+            };
+            console.log(wallPost);
+            fbgraph.post('/feed', wallPost, (err, res) => {
+              if (err) {
+                console.error(err);
+                return done(err);
+              }
+              // returns the post id
+              console.log(res); // { id: xxxxx}
+            });
+          }
+        }
+      );
+    });
+  }
+
+  try {
+    // const p = new Product(job.attrs.data.product);
+    // await p.save();
+    done();
+  } catch (err) {
+    console.error(err);
+    done(err);
+  }
 });
 
 function graceful() {
