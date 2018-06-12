@@ -43,6 +43,16 @@ const UserSchema = new Schema(
       lowercase: true,
       // validated at API level via 'Joi' and 'isEmail' npm packages
     },
+    facebook: String,
+    tokens: [
+      {
+        kind: {
+          type: String,
+          enum: ['fb', 'vk'],
+        },
+        accessToken: String,
+      },
+    ],
     followersCount: {
       type: Number,
       required: true,
@@ -66,6 +76,7 @@ const UserSchema = new Schema(
     mobileNumber: {
       type: String,
       trim: true,
+      // match: [validation.mobileNumber, 'Invalid mobile number.'],
     },
     password: {
       type: String,
@@ -140,6 +151,7 @@ export class UserDoc /*:: extends Mongoose$Document */ {
   deletedAt: ?Date;
   displayName: ?string;
   emailAddress: string;
+  facebook: string;
   followersCount: number;
   followingCount: number;
   mobileNumber: ?string;
@@ -151,6 +163,7 @@ export class UserDoc /*:: extends Mongoose$Document */ {
   ratingsTotal: number;
   reviewsCount: number;
   shippingAddress: ?any;
+  tokens: Array<any>;
   updatedAt: Date;
   username: string;
 }
@@ -208,7 +221,6 @@ UserSchema.statics = {
 // Never return these fields in the JSON representation
 // This doesn't effect `toObject` method
 UserSchema.set('toJSON', {
-  getters: true,
   transform: (doc, ret) => {
     delete ret.password;
     delete ret.__v;
@@ -218,6 +230,8 @@ UserSchema.set('toJSON', {
 
 UserSchema.index({ emailAddress: 1 }, { unique: true });
 UserSchema.index({ username: 1 }, { unique: true });
+UserSchema.index({ createdAt: -1 });
+UserSchema.index({ facebook: 1 }, { unique: true, sparse: true });
 
 /**
  * @memberof UserSchema
