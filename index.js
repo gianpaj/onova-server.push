@@ -6,7 +6,8 @@ import Agenda from 'agenda';
 import winston from 'winston';
 import mongoose from 'mongoose';
 import User, { UserDoc } from './user.model';
-import fbgraph from 'fbgraph';
+import Product from './product.model';
+// import fbgraph from 'fbgraph';
 
 const Joi = require('joi');
 require('dotenv').config();
@@ -28,14 +29,14 @@ const envVarsSchema = Joi.object({
   MONGO_URI_DATA: Joi.string()
     .required()
     .description('MongoDB URI'),
-  FACEBOOK_APP_ID: Joi.string()
-    .required()
-    .description(
-      'Facebook APP ID for Login? and Posting item on sellers` walls'
-    ),
-  FACEBOOK_APP_SECRET: Joi.string()
-    .required()
-    .description('Facebook APP Secret'),
+  // FACEBOOK_APP_ID: Joi.string()
+  //   .required()
+  //   .description(
+  //     'Facebook APP ID for Login? and Posting item on sellers` walls'
+  //   ),
+  // FACEBOOK_APP_SECRET: Joi.string()
+  //   .required()
+  //   .description('Facebook APP Secret'),
 })
   .unknown()
   .required();
@@ -309,8 +310,9 @@ agenda.define(JOBNAMES.PUSHORDER, (job, done) => {
 agenda.define(JOBNAMES.SCHEDULE, async (job: Agenda.Job<any>, done) => {
   const { data } = job.attrs;
 
-  if (data.socials.includes('fb')) {
     const user = await User.findById(data.product.seller);
+  /*
+  if (data.socials.includes('fb')) {
     console.log(user.tokens);
     const accessToken = user.tokens.find(t => t.kind === 'fb').accessToken;
     fbgraph.setVersion('2.11');
@@ -367,11 +369,12 @@ agenda.define(JOBNAMES.SCHEDULE, async (job: Agenda.Job<any>, done) => {
         }
       );
     });
+  }*/
   }
 
   try {
-    // const p = new Product(job.attrs.data.product);
-    // await p.save();
+    const p = new Product(job.attrs.data.product);
+    await p.save();
     done();
   } catch (err) {
     console.error(err);
