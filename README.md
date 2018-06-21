@@ -28,9 +28,14 @@ Set environment vars based on the example file:
 cp .env.example .env
 ```
 
-Start server:
+Start development server:
 
 ```sh
-# Start server
 yarn dev:start
+```
+
+Start Chrome Debugger:
+
+```hs
+yarn dev:start --inspect
 ```
