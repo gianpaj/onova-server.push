@@ -315,7 +315,10 @@ agenda.define(JOBNAMES.SCHEDULE, async (job: Agenda.Job<any>, done) => {
     i => !i.includes('thumb.jpg')
   );
 
-    const user = await User.findById(data.product.seller);
+  // const user = await User.findById(data.product.seller);
+
+  // TODO: check if user status is active
+
   /*
   if (data.socials.includes('fb')) {
     console.log(user.tokens);
@@ -375,7 +378,6 @@ agenda.define(JOBNAMES.SCHEDULE, async (job: Agenda.Job<any>, done) => {
       );
     });
   }*/
-  }
 
   try {
     const p = new Product(data.product);
