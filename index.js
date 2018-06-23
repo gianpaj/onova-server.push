@@ -310,6 +310,11 @@ agenda.define(JOBNAMES.PUSHORDER, (job, done) => {
 agenda.define(JOBNAMES.SCHEDULE, async (job: Agenda.Job<any>, done) => {
   const { data } = job.attrs;
 
+  // remove thumb
+  data.product.photoURIs = data.product.photoURIs.filter(
+    i => !i.includes('thumb.jpg')
+  );
+
     const user = await User.findById(data.product.seller);
   /*
   if (data.socials.includes('fb')) {
@@ -373,7 +378,7 @@ agenda.define(JOBNAMES.SCHEDULE, async (job: Agenda.Job<any>, done) => {
   }
 
   try {
-    const p = new Product(job.attrs.data.product);
+    const p = new Product(data.product);
     await p.save();
     done();
   } catch (err) {
