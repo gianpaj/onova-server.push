@@ -1,10 +1,10 @@
-# Onova Push notifications Server
+# Onova Push notification Server
 
 To debug GCM push notifications:
 
     DEBUG=node-gcm node index.js
 
-To debug the scheduled jobs agenda:
+To debug the Agenda scheduled jobs:
 
     DEBUG="agenda:*" node index.js
 
@@ -12,30 +12,20 @@ To debug the scheduled jobs agenda:
 
 Install yarn:
 
-```sh
-npm install -g yarn
-```
+    npm install -g yarn
 
 Install dependencies:
 
-```sh
-yarn
-```
+    yarn
 
 Set environment vars based on the example file:
 
-```sh
-cp .env.example .env
-```
+    cp .env.example .env
 
 Start development server:
 
-```sh
-yarn dev:start
-```
+    yarn dev:start
 
 Start Chrome Debugger:
 
-```hs
-yarn dev:start --inspect
-```
+    yarn dev:start --inspect

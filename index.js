@@ -154,9 +154,9 @@ function sendPush(job, done, withSenderName = true) {
     platform,
     productUuid, // for comments
     pushToken,
-    senderId, // TODO: check if user is not banned
+    // senderId, // TODO: check if user is not banned
     senderName,
-    targetUser, // TODO: check push notification user preference, and it's not banned
+    // targetUser, // TODO: check push notification user preference, and it's not banned
     triggeredBy,
     triggeredType,
   } = job.attrs.data;
@@ -304,7 +304,8 @@ agenda.define(JOBNAMES.PUSH_MSG, (job, done) => {
 agenda.define(JOBNAMES.PUSH_COMMENT, sendPush);
 agenda.define(JOBNAMES.PUSH_FOLLOW, sendPush);
 agenda.define(JOBNAMES.PUSHORDER, (job, done) => {
-  sendPush(job, done, (withSenderName = false));
+  const withSenderName = false;
+  sendPush(job, done, withSenderName);
 });
 
 agenda.define(JOBNAMES.SCHEDULE, async (job: Agenda.Job<any>, done) => {
