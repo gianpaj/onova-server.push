@@ -22,6 +22,11 @@ const CommentSchema = new Schema({
   },
 });
 
+const GeoJSON = new Schema({
+  type: { type: String, enum: ['Point'], required: true },
+  coordinates: [Number],
+});
+
 // from mobileapp (AddProduct.js)
 // categoryIds
 //   { label: 'Clothes', value: 0 },
@@ -58,6 +63,11 @@ var ProductSchema = new Schema(
     photoURIs: {
       type: [String],
       // required: true, // added async after the images are uploaded to GSC
+    },
+    location: { type: GeoJSON, required: false },
+    locality: {
+      type: String,
+      // required: true,
     },
     price: {
       type: Schema.Types.Decimal,
@@ -103,6 +113,14 @@ export class ProductDoc /*:: extends Mongoose$Document */ {
   description: string;
   likes: Array<MongoId>;
   photoURIs: Array<string>;
+  location: {
+    type: string,
+    coordinates: {
+      latitude: ?number,
+      longitude: ?number,
+    },
+  };
+  locality: string;
   price: number;
   seller: string;
   status: string;
