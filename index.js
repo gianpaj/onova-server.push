@@ -299,7 +299,10 @@ agenda.define(JOBNAMES.PUSH_MSG, (job, done) => {
         done();
       });
     })
-    .catch(e => console.error(e));
+    .catch(e => {
+      done(new Error(e));
+      console.error(e);
+    });
 });
 agenda.define(JOBNAMES.PUSH_COMMENT, sendPush);
 agenda.define(JOBNAMES.PUSH_FOLLOW, sendPush);
