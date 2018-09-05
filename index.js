@@ -56,14 +56,21 @@ const JOBNAMES = {
   SCHEDULE: 'listing-schedule',
 };
 
-mongoose.connect(config.MONGO_URI_DATA, { keepAlive: 1 }).then(
-  () => {
-    console.log(`connected to ${config.MONGO_URI_DATA}`);
-  },
-  err => {
-    throw new Error(`unable to connect to: ${config.MONGO_URI_DATA} - ${err}`);
-  }
-);
+mongoose
+  .connect(
+    config.MONGO_URI_DATA,
+    { keepAlive: 1 }
+  )
+  .then(
+    () => {
+      console.log(`connected to ${config.MONGO_URI_DATA}`);
+    },
+    err => {
+      throw new Error(
+        `unable to connect to: ${config.MONGO_URI_DATA} - ${err}`
+      );
+    }
+  );
 
 // print mongoose logs in dev env
 if (config.NODE_ENV !== 'production') {
