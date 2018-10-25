@@ -157,6 +157,7 @@ agenda.on('error', () => {
 
 function sendPush(job, done, withSenderName = true) {
   const {
+    data,
     message,
     platform,
     productUuid, // for comments
@@ -197,6 +198,7 @@ function sendPush(job, done, withSenderName = true) {
       body: message,
       priority: 2,
       productUuid,
+      extra: data, // for Order notifications
     },
     // priority: 'high',
     notification: notification,
