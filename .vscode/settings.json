@@ -5,5 +5,7 @@
     "**/coverage": true
   },
   "javascript.validate.enable": false,
-  "deepscan.enable": true,
+  "prettier.eslintIntegration": true,
+  "eslint.enable": true,
+  "deepscan.enable": true
 }

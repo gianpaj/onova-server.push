@@ -3,7 +3,7 @@
 
 import mongoose from 'mongoose';
 
-const Schema = mongoose.Schema;
+const { Schema } = mongoose;
 
 /**
  * User Schema
@@ -15,19 +15,6 @@ const UserSchema = new Schema(
       required: true,
       default: 'notverified',
       enum: ['verified', 'notverified', 'banned', 'deleted'],
-    },
-    billingAddress: {
-      firstName: String,
-      lastName: String,
-      company: String,
-      line1: String,
-      line2: String,
-      line3: String,
-      city: String,
-      state: String,
-      country: String, // ISO 3166-1 alpha-2 format
-      postcode: String,
-      phone: String,
     },
     bio: String,
     displayName: {
@@ -50,7 +37,10 @@ const UserSchema = new Schema(
           type: String,
           enum: ['fb', 'vk'],
         },
-        accessToken: String,
+        accessToken: {
+          type: String,
+          required: true,
+        },
       },
     ],
     followersCount: {
@@ -73,10 +63,19 @@ const UserSchema = new Schema(
         message: '{VALUE} is not an integer value',
       },
     },
+    sharedCount: {
+      type: Number,
+      required: true,
+      default: 0,
+      min: 0,
+      validate: {
+        validator: Number.isInteger,
+        message: '{VALUE} is not an integer value',
+      },
+    },
     mobileNumber: {
       type: String,
       trim: true,
-      // match: [validation.mobileNumber, 'Invalid mobile number.'],
     },
     password: {
       type: String,
@@ -87,15 +86,12 @@ const UserSchema = new Schema(
       enum: ['android', 'ios'],
     },
     paymentInfo: {
-      paymentMethod: {
+      method: {
         type: String,
-        enum: ['paypal', 'c2c'],
+        enum: ['paypal', 'uapay'],
       },
-      third_party_token: String,
-      // temp
+      card_token: String,
       last_four: String,
-      exp_month: String,
-      exp_year: String,
     },
     profilePic: String,
     pushToken: String,
@@ -118,14 +114,9 @@ const UserSchema = new Schema(
     shippingAddress: {
       firstName: String,
       lastName: String,
-      company: String,
-      line1: String,
-      line2: String,
-      line3: String,
+      fathersName: String,
       city: String,
-      state: String,
-      country: String, // ISO 3166-1 alpha-2 format
-      postcode: String,
+      departmentNovaposhta: String,
     },
     username: {
       type: String,
@@ -143,17 +134,17 @@ const UserSchema = new Schema(
 );
 
 export class UserDoc /*:: extends Mongoose$Document */ {
-  _id: MongoId;
+  _id: bson$ObjectId;
   accountStatus: string;
-  billingAddress: ?any;
   bio: ?string;
   createdAt: Date;
   deletedAt: ?Date;
   displayName: ?string;
   emailAddress: string;
-  facebook: string;
+  facebook: ?string;
   followersCount: number;
   followingCount: number;
+  sharedCount: number;
   mobileNumber: ?string;
   password: string;
   paymentInfo: ?any;
@@ -222,6 +213,7 @@ UserSchema.statics = {
 // This doesn't effect `toObject` method
 UserSchema.set('toJSON', {
   transform: (doc, ret) => {
+    if (doc.paymentInfo.card_token) delete ret.paymentInfo.card_token;
     delete ret.password;
     delete ret.__v;
     return ret;
@@ -231,7 +223,7 @@ UserSchema.set('toJSON', {
 UserSchema.index({ emailAddress: 1 }, { unique: true });
 UserSchema.index({ username: 1 }, { unique: true });
 UserSchema.index({ createdAt: -1 });
-UserSchema.index({ facebook: 1 }, { unique: true, sparse: true });
+// UserSchema.index({ facebook: 1 }, { unique: true, sparse: true });
 
 /**
  * @memberof UserSchema
