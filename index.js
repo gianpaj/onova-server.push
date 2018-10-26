@@ -51,9 +51,10 @@ if (error) {
 const JOBNAMES = {
   PUSH_COMMENT: 'send-push-comment',
   PUSH_FOLLOW: 'send-push-follow',
-  PUSHORDER: 'send-push-order',
   PUSH_MSG: 'send-push-msg', // person to person
+  PUSH_ORDER: 'send-push-order',
   SCHEDULE: 'listing-schedule',
+  // SYSTEM_MSG: 'send-system-message',
 };
 
 mongoose
@@ -315,7 +316,7 @@ agenda.define(JOBNAMES.PUSH_MSG, (job, done) => {
 });
 agenda.define(JOBNAMES.PUSH_COMMENT, sendPush);
 agenda.define(JOBNAMES.PUSH_FOLLOW, sendPush);
-agenda.define(JOBNAMES.PUSHORDER, (job, done) => {
+agenda.define(JOBNAMES.PUSH_ORDER, (job, done) => {
   const withSenderName = false;
   sendPush(job, done, withSenderName);
 });
