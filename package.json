@@ -1,9 +1,7 @@
 {
   "name": "onova.server.push",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "Push notification server",
-  "author": "Onova Team",
-  "private": true,
   "main": "index.js",
   "scripts": {
     "start": "yarn prod:build && yarn prod:start",
@@ -15,12 +13,15 @@
     "test:coverage": "jest --coverage"
   },
   "dependencies": {
+    "@babel/cli": "^7.0.0",
+    "@babel/core": "^7.0.0",
+    "@babel/plugin-proposal-object-rest-spread": "^7.0.0",
+    "@babel/preset-env": "^7.0.0",
+    "@babel/preset-flow": "^7.0.0",
+    "@pusher/chatkit-server": "^0.12.2",
     "agenda": "^1.0.3",
-    "babel-cli": "^6.26.0",
-    "babel-eslint": "^8.2.2",
-    "babel-preset-env": "^1.6.1",
-    "babel-preset-flow": "^6.23.0",
-    "dotenv": "^5.0.1",
+    "babel-eslint": "^9.0.0",
+    "dotenv": "^6.0.0",
     "joi": "13.3.0",
     "mongoose": "^5.2.17",
     "node-gcm": "^1.0.2",
@@ -29,12 +30,15 @@
     "winston": "^3.0.0-rc1"
   },
   "devDependencies": {
-    "eslint": "^4.18.2",
-    "eslint-config-prettier": "^2.9.0",
-    "eslint-plugin-flowtype": "^2.46.1",
+    "@babel/node": "^7.0.0",
+    "eslint": "^5.5.0",
+    "eslint-config-prettier": "^3.0.1",
+    "eslint-plugin-flowtype": "^2.46.2",
+    "eslint-plugin-import": "^2.14.0",
     "eslint-plugin-prettier": "^2.6.0",
-    "flow-bin": "^0.66.0",
+    "flow-bin": "^0.80.0",
     "jest": "^22.4.2",
+    "nodemon": "^1.18.4",
     "prettier": "^1.14.2",
     "supertest": "^3.0.0"
   },
@@ -47,6 +51,14 @@
   "repository": {
     "type": "git",
     "url": "https://bitbucket.org/onova/server.push.git"
+  },
+  "private": true,
+  "author": "Onova Team <hello@onova.co>",
+  "nodemonConfig": {
+    "ignore": [
+      "lib/*"
+    ],
+    "delay": "2500"
   },
   "jest": {
     "verbose": true,
