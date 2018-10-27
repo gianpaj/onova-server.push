@@ -9,6 +9,8 @@ import User, { UserDoc } from './user.model';
 import Product from './product.model';
 // import fbgraph from 'fbgraph';
 
+const ONOVA_BOT_ID = '5bd1f7af46c62e6cdee546d0';
+
 const Joi = require('joi');
 require('dotenv').config();
 
@@ -256,7 +258,9 @@ agenda.define(JOBNAMES.PUSH_MSG, (job, done) => {
         throw new Error(`no user found for ${targetUser}`);
       }
 
-      const senderUser = await User.findById(senderId);
+      // for Push notifications for system messages from @onovabot
+      let senderUser = { username: null };
+      if (senderId !== ONOVA_BOT_ID) senderUser = await User.findById(senderId);
 
       if (!senderUser) {
         throw new Error(`no user found for ${senderId}`);
