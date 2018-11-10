@@ -398,8 +398,10 @@ agenda.define(JOBNAMES.SCHEDULE, async (job: Agenda.Job<any>, done) => {
   }*/
 
   try {
-    const p = new Product(data.product);
-    await p.save();
+    await Product.create({
+      ...data.product,
+      price: data.product.price.toString(),
+    });
     done();
   } catch (err) {
     console.error(err);
