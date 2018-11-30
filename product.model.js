@@ -55,6 +55,9 @@ var ProductSchema = new Schema(
       type: String,
       required: true,
     },
+    dropId: {
+      type: Schema.Types.ObjectId,
+    },
     // not being used
     likes: {
       type: [Schema.Types.ObjectId],
@@ -73,6 +76,7 @@ var ProductSchema = new Schema(
       type: Schema.Types.Decimal,
       required: true,
     },
+    reservedDate: Date,
     seller: {
       type: Schema.Types.ObjectId,
       ref: 'User',
@@ -93,6 +97,11 @@ var ProductSchema = new Schema(
       type: [Number],
       required: true,
     },
+    weight: {
+      type: Number,
+      default: 5000, // 5kg
+      required: true,
+    },
     uuid: {
       type: String,
       unique: true, // Unique index
@@ -111,6 +120,7 @@ export class ProductDoc /*:: extends Mongoose$Document */ {
   createdAt: Date;
   currency: string;
   description: string;
+  dropId: MongoId;
   likes: Array<MongoId>;
   photoURIs: Array<string>;
   location: {
@@ -122,10 +132,12 @@ export class ProductDoc /*:: extends Mongoose$Document */ {
   };
   locality: string;
   price: number;
+  reservedDate: Date;
   seller: string;
   status: string;
   tags: Array<string>; // optional
   typeIds: Array<Number>;
+  weight: Number;
   uuid: string;
 }
 
