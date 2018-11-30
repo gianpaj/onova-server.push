@@ -1,18 +1,27 @@
 // @flow
 
-const gcm = require('node-gcm');
-const Raven = require('raven');
+import gcm from 'node-gcm';
+import Raven from 'raven';
 import Agenda from 'agenda';
 import winston from 'winston';
 import mongoose from 'mongoose';
+import Joi from 'joi';
+
 import User, { UserDoc } from './user.model';
 import Product from './product.model';
 // import fbgraph from 'fbgraph';
 
 const ONOVA_BOT_ID = '5bd1f7af46c62e6cdee546d0';
 
-const Joi = require('joi');
-require('dotenv').config();
+const isTestEnv = process.env.NODE_ENV === 'test';
+
+// require and configure dotenv, will load vars in .env file in process.env
+if (isTestEnv) {
+  console.warn('running on `test` environment');
+  require('dotenv').config({ path: '.env.test' });
+} else {
+  require('dotenv').config();
+}
 
 // define validation for all the env vars
 const envVarsSchema = Joi.object({
