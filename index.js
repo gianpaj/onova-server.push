@@ -125,6 +125,7 @@ const agenda = new Agenda({
     defaultLockLifetime: 5000, // seconds
   },
 });
+console.log(`agenda connected to ${config.MONGO_URI_AGENDA}`);
 const sender = new gcm.Sender(config.FCM_SERVER_KEY);
 
 if (config.NODE_ENV == 'production') {
