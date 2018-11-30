@@ -13,34 +13,31 @@
     "test:coverage": "jest --coverage"
   },
   "dependencies": {
-    "@babel/cli": "^7.0.0",
-    "@babel/core": "^7.0.0",
-    "@babel/plugin-proposal-object-rest-spread": "^7.0.0",
-    "@babel/preset-env": "^7.0.0",
-    "@babel/preset-flow": "^7.0.0",
-    "@pusher/chatkit-server": "^0.12.2",
     "agenda": "^1.0.3",
     "babel-eslint": "^9.0.0",
     "dotenv": "^6.0.0",
-    "joi": "13.3.0",
+    "joi": "^13.7.0",
     "mongoose": "^5.2.17",
     "node-gcm": "^1.0.2",
-    "raven": "^2.4.2",
-    "shortid": "^2.2.13",
-    "winston": "^3.0.0-rc1"
+    "raven": "^2.6.0",
+    "shortid": "^2.2.0",
+    "winston": "^3.0.0"
   },
   "devDependencies": {
+    "@babel/cli": "^7.1.0",
+    "@babel/core": "^7.1.0",
     "@babel/node": "^7.0.0",
+    "@babel/plugin-proposal-object-rest-spread": "^7.0.0",
+    "@babel/preset-env": "^7.1.0",
+    "@babel/preset-flow": "^7.0.0",
     "eslint": "^5.5.0",
     "eslint-config-prettier": "^3.0.1",
     "eslint-plugin-flowtype": "^2.46.2",
     "eslint-plugin-import": "^2.14.0",
     "eslint-plugin-prettier": "^2.6.0",
     "flow-bin": "^0.80.0",
-    "jest": "^22.4.2",
     "nodemon": "^1.18.4",
-    "prettier": "^1.14.2",
-    "supertest": "^3.0.0"
+    "prettier": "^1.15.0"
   },
   "engineStrict": true,
   "engines": {
