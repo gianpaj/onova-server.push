@@ -226,11 +226,11 @@ ProductSchema.set('toJSON', {
   },
 });
 
-ProductSchema.index({ status: 1, createdAt: 1 });
+// ProductSchema.index({ status: 1, createdAt: 1 });
 // ProductSchema.index({ status: 1, categoryIds: 1 });
-ProductSchema.index({ status: 1, tags: 1 });
-ProductSchema.index({ status: 1, photoURIs: 1 });
-ProductSchema.index({ status: 1, seller: 1 });
+// ProductSchema.index({ status: 1, tags: 1 });
+// ProductSchema.index({ status: 1, photoURIs: 1 });
+// ProductSchema.index({ status: 1, seller: 1 });
 // ProductSchema.index({ uuid: 1 }, { unique: true }); // created by `unique` schema setting above
 
 const UNIQUE_RETRIES = 9999;

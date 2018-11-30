@@ -8,6 +8,8 @@ import mongoose from 'mongoose';
 import Joi from 'joi';
 
 import User, { UserDoc } from './user.model';
+import Notification from './notification.model';
+import type { NotifPayload } from './types';
 import Product from './product.model';
 // import fbgraph from 'fbgraph';
 
@@ -61,6 +63,7 @@ if (error) {
 
 const JOBNAMES = {
   PUSH_COMMENT: 'send-push-comment',
+  PUSH_DROP_LISTED: 'send-push-drop-listed',
   PUSH_FOLLOW: 'send-push-follow',
   PUSH_MSG: 'send-push-msg', // person to person
   PUSH_ORDER: 'send-push-order',
@@ -68,10 +71,15 @@ const JOBNAMES = {
   // SYSTEM_MSG: 'send-system-message',
 };
 
+const i18n = {
+  // listedDrop: 'Your drop has been listed',
+  listedDrop: 'Ваш Дроп виставлено на продаж',
+};
+
 mongoose
   .connect(
     config.MONGO_URI_DATA,
-    { keepAlive: 1 }
+    { keepAlive: 1, useNewUrlParser: true }
   )
   .then(
     () => {
@@ -411,12 +419,63 @@ agenda.define(JOBNAMES.SCHEDULE, async (job: Agenda.Job<any>, done) => {
       ...data.product,
       price: data.product.price.toString(),
     });
+
+    // Send push notification to the seller
+    await schedulePush({
+      // data,
+      notifI18n: i18n.listedDrop,
+      targetUser: data.product.seller,
+      triggeredBy: data.product.seller,
+      triggeredType: 'User',
+    });
+    await Notification.create({
+      data,
+      notifI18n: i18n.listedDrop,
+      sourceUser: data.product.seller,
+      targetUser: data.product.seller,
+      triggeredBy: data.product.seller,
+      triggeredType: 'User',
+    });
     done();
   } catch (err) {
     console.error(err);
     done(err);
   }
 });
+
+async function schedulePush({
+  // data,
+  notifI18n,
+  targetUser,
+  triggeredBy,
+  triggeredType,
+}: NotifPayload): Promise<void> {
+  try {
+    const sender: UserDoc = await User.findById(triggeredBy);
+    if (!sender) throw new Error('Cannot find sender');
+
+    const target: UserDoc = User.findById(targetUser);
+    if (!target) throw new Error('Cannot find target');
+
+    const pushData = {
+      message: notifI18n,
+      platform: target.platform,
+      pushToken: target.pushToken,
+      triggeredBy: sender._id,
+      triggeredType,
+      senderName: sender.username,
+      targetUser: target._id,
+    };
+
+    const job = agenda.create(JOBNAMES.PUSH_DROP_LISTED, pushData);
+
+    await job.save(err => {
+      if (err) throw new Error(`Job failed with error: ${err}`);
+    });
+  } catch (error) {
+    console.error(e);
+  }
+}
 
 function graceful() {
   agenda.stop(() => {
