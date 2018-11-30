@@ -16,10 +16,13 @@ const UserSchema = new Schema(
       default: 'notverified',
       enum: ['verified', 'notverified', 'banned', 'deleted'],
     },
-    bio: String,
+    bio: {
+      type: String,
+      maxlength: 300,
+    },
     displayName: {
       type: String,
-      minlength: 3,
+      minlength: 0,
       maxlength: 30,
     },
     emailAddress: {
