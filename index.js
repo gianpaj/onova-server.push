@@ -458,7 +458,7 @@ async function schedulePush({
     const sender: UserDoc = await User.findById(triggeredBy);
     if (!sender) throw new Error('Cannot find sender');
 
-    const target: UserDoc = User.findById(targetUser);
+    const target: UserDoc = await User.findById(targetUser);
     if (!target) throw new Error('Cannot find target');
 
     const pushData = {
