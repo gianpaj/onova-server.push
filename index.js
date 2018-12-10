@@ -337,6 +337,7 @@ agenda.define(JOBNAMES.PUSH_MSG, (job, done) => {
     });
 });
 agenda.define(JOBNAMES.PUSH_COMMENT, sendPush);
+agenda.define(JOBNAMES.PUSH_DROP_LISTED, sendPush);
 agenda.define(JOBNAMES.PUSH_FOLLOW, sendPush);
 agenda.define(JOBNAMES.PUSH_ORDER, (job, done) => {
   const withSenderName = false;
@@ -424,6 +425,7 @@ agenda.define(JOBNAMES.SCHEDULE, async (job: Agenda.Job<any>, done) => {
     // Send push notification to the seller
     await schedulePush({
       // data,
+      dropId: data.product.dropId,
       notifI18n: i18n.listedDrop,
       targetUser: data.product.seller,
       triggeredBy: data.product.seller,
@@ -446,6 +448,7 @@ agenda.define(JOBNAMES.SCHEDULE, async (job: Agenda.Job<any>, done) => {
 
 async function schedulePush({
   // data,
+  dropId,
   notifI18n,
   targetUser,
   triggeredBy,
@@ -469,6 +472,7 @@ async function schedulePush({
     };
 
     const job = agenda.create(JOBNAMES.PUSH_DROP_LISTED, pushData);
+    job.unique({ dropId });
 
     await job.save(err => {
       if (err) throw new Error(`Job failed with error: ${err}`);
