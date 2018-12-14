@@ -30,6 +30,11 @@ const envVarsSchema = Joi.object({
   NODE_ENV: Joi.string()
     .allow(['development', 'production', 'test', 'stage'])
     .default('development'),
+  MONGOOSE_DEBUG: Joi.boolean().when('NODE_ENV', {
+    is: Joi.string().equal('development'),
+    then: Joi.boolean().default(true),
+    otherwise: Joi.boolean().default(false),
+  }),
   FCM_SERVER_KEY: Joi.string()
     .required()
     .description('Firebase Cloud Messaging (FCM) key'),
@@ -93,7 +98,7 @@ mongoose
   );
 
 // print mongoose logs in dev env
-if (config.NODE_ENV !== 'production') {
+if (config.MONGOOSE_DEBUG) {
   mongoose.set('debug', (collectionName, method, query, doc) => {
     console.log(`${collectionName}.${method}`, query, doc);
   });
