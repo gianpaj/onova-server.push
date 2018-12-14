@@ -1,11 +1,11 @@
 {
+  "javascript.validate.enable": false,
+  "deepscan.enable": true,
   "files.exclude": {
     "**/flow-typed": true,
     "**/yarn.lock": true,
     "**/coverage": true
   },
-  "javascript.validate.enable": false,
-  "prettier.eslintIntegration": true,
   "eslint.enable": true,
-  "deepscan.enable": true
+  "prettier.eslintIntegration": true
 }

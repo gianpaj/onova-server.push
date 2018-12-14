@@ -422,6 +422,23 @@ agenda.define(JOBNAMES.SCHEDULE, async (job: Agenda.Job<any>, done) => {
       price: data.product.price.toString(),
     });
 
+    const existingNotif = await Notification.findOne({
+      'data.product.dropId': data.product.dropId,
+      notifI18n: i18n.listedDrop,
+    });
+
+    // avoid sending a duplicate Push notification and in-app Notification for the same DropId
+    if (existingNotif) return done();
+
+    await Notification.create({
+      data,
+      notifI18n: i18n.listedDrop,
+      sourceUser: data.product.seller,
+      targetUser: data.product.seller,
+      triggeredBy: data.product.seller,
+      triggeredType: 'User',
+    });
+
     // Send push notification to the seller
     await schedulePush({
       // data,
@@ -431,14 +448,7 @@ agenda.define(JOBNAMES.SCHEDULE, async (job: Agenda.Job<any>, done) => {
       triggeredBy: data.product.seller,
       triggeredType: 'User',
     });
-    await Notification.create({
-      data,
-      notifI18n: i18n.listedDrop,
-      sourceUser: data.product.seller,
-      targetUser: data.product.seller,
-      triggeredBy: data.product.seller,
-      triggeredType: 'User',
-    });
+
     done();
   } catch (err) {
     console.error(err);
@@ -474,11 +484,13 @@ async function schedulePush({
     const job = agenda.create(JOBNAMES.PUSH_DROP_LISTED, pushData);
     job.unique({ dropId });
 
-    await job.save(err => {
+    return job.save(err => {
       if (err) throw new Error(`Job failed with error: ${err}`);
+      logger.info(JOBNAMES.PUSH_DROP_LISTED + ' scheduled');
     });
   } catch (error) {
-    console.error(e);
+    console.error(error);
+    throw error;
   }
 }
 
