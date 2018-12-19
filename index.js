@@ -8,9 +8,10 @@ import mongoose from 'mongoose';
 import Joi from 'joi';
 
 import User, { UserDoc } from './user.model';
+import Drop from './drop.model';
 import Notification from './notification.model';
-import type { NotifPayload } from './types';
 import Product from './product.model';
+import type { NotifPayload } from './types';
 // import fbgraph from 'fbgraph';
 
 const ONOVA_BOT_ID = '5bd1f7af46c62e6cdee546d0';
@@ -350,85 +351,22 @@ agenda.define(JOBNAMES.PUSH_ORDER, (job, done) => {
 });
 
 agenda.define(JOBNAMES.SCHEDULE, async (job: Agenda.Job<any>, done) => {
-  const { data } = job.attrs;
-
-  // remove thumb
-  data.product.photoURIs = data.product.photoURIs.filter(
-    i => !i.includes('thumb.jpg')
-  );
-
-  // const user = await User.findById(data.product.seller);
-
-  // TODO: check if user status is active
-
-  /*
-  if (data.socials.includes('fb')) {
-    console.log(user.tokens);
-    const accessToken = user.tokens.find(t => t.kind === 'fb').accessToken;
-    fbgraph.setVersion('2.11');
-    fbgraph.setAccessToken(accessToken);
-    // fbgraph.extendAccessToken(
-    //   {
-    //     access_token: accessToken,
-    //     client_id: config.FACEBOOK_APP_ID,
-    //     client_secret: config.FACEBOOK_APP_SECRET,
-    //   },
-    //   (err, facebookRes) => {
-    //     if (err) {
-    //       console.error(err);
-    //       return done(err);
-    //     }
-    //     console.log(facebookRes);
-    //   }
-    // );
-
-    // remove thumb
-    const images = data.product.photoURIs.filter(i => !i.includes('thumb.jpg'));
-
-    let imageIds = [];
-    let todo = images.length;
-    if (!todo) return done(new Error('no images'));
-
-    images.forEach(image => {
-      fbgraph.post(
-        '/me/photos',
-        { published: false, url: image },
-        (err, res) => {
-          if (err) {
-            console.error(err);
-            return done(err);
-          }
-          imageIds.push(res.id);
-          if (--todo === 0) {
-            let wallPost = {
-              message: data.product.description,
-              attached_media: imageIds.map(id => ({
-                media_fbid: id,
-              })),
-            };
-            console.log(wallPost);
-            fbgraph.post('/feed', wallPost, (err, res) => {
-              if (err) {
-                console.error(err);
-                return done(err);
-              }
-              // returns the post id
-              console.log(res); // { id: xxxxx}
-            });
-          }
-        }
-      );
-    });
-  }*/
+  const { _id: dropId, seller } = job.attrs.data;
 
   try {
-    await Product.create({
-      ...data.product,
-      price: data.product.price.toString(),
-    });
+    const res = await Promise.all([
+      await Drop.updateOne({ _id: dropId }, { posted: true }),
+      await Product.updateMany({ dropId }, { status: 'forsale' }),
+    ]);
+
+    if (res.reduce((acc, currVal) => acc.nModified + currVal.nModified) < 2) {
+      console.log(job.attrs.data);
+      console.log(res);
+      throw new Error('error updating Drop and or Products');
+    }
 
     const existingNotif = await Notification.findOne({
-      'data.product.dropId': data.product.dropId,
+      dropId,
       notifI18n: i18n.listedDrop,
     });
 
@@ -436,21 +374,21 @@ agenda.define(JOBNAMES.SCHEDULE, async (job: Agenda.Job<any>, done) => {
     if (existingNotif) return done();
 
     await Notification.create({
-      data,
+      dropId,
       notifI18n: i18n.listedDrop,
-      sourceUser: data.product.seller,
-      targetUser: data.product.seller,
-      triggeredBy: data.product.seller,
+      sourceUser: seller,
+      targetUser: seller,
+      triggeredBy: seller,
       triggeredType: 'User',
     });
 
     // Send push notification to the seller
     await schedulePush({
       // data,
-      dropId: data.product.dropId,
+      dropId,
       notifI18n: i18n.listedDrop,
-      targetUser: data.product.seller,
-      triggeredBy: data.product.seller,
+      targetUser: seller,
+      triggeredBy: seller,
       triggeredType: 'User',
     });
 
