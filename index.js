@@ -365,14 +365,6 @@ agenda.define(JOBNAMES.SCHEDULE, async (job: Agenda.Job<any>, done) => {
       throw new Error('error updating Drop and or Products');
     }
 
-    const existingNotif = await Notification.findOne({
-      dropId,
-      notifI18n: i18n.listedDrop,
-    });
-
-    // avoid sending a duplicate Push notification and in-app Notification for the same DropId
-    if (existingNotif) return done();
-
     await Notification.create({
       dropId,
       notifI18n: i18n.listedDrop,
