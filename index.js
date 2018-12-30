@@ -393,6 +393,61 @@ agenda.define(JOBNAMES.SCHEDULE, async (job: Agenda.Job<any>, done) => {
   }
 });
 
+agenda.define(
+  JOBNAMES.DROP_SUBSCRIPTION,
+  async (job: Agenda.Job<any>, done) => {
+    const { _id: dropId, seller: sellerId } = job.attrs.data;
+
+    try {
+      if (!sellerId) {
+        throw new Error(`No seller found - ${JOBNAMES.DROP_SUBSCRIPTION}`);
+      }
+
+      const [drop, seller] = await Promise.all([
+        Drop.findById(dropId),
+        User.findById(sellerId),
+      ]);
+
+      if (!drop) {
+        throw new Error(`No drop found - ${JOBNAMES.DROP_SUBSCRIPTION}`);
+      }
+
+      const notifI18n = `@${seller.username} ${i18n.sellerDropIsAboutToDrop}`;
+
+      if (drop.subscribers && drop.subscribers.length) {
+        await Promise.all(
+          drop.subscribers.map(subscriber =>
+            Notification.create({
+              dropId,
+              notifI18n,
+              sourceUser: subscriber._id,
+              targetUser: subscriber._id,
+              triggeredBy: subscriber._id,
+              triggeredType: 'DropSubscription',
+            })
+          )
+        );
+        await Promise.all(
+          drop.subscribers.map(subscriber =>
+            schedulePush({
+              dropId,
+              notifI18n,
+              targetUser: subscriber._id,
+              triggeredBy: subscriber._id,
+              triggeredType: 'DropSubscription',
+            })
+          )
+        );
+      }
+
+      done();
+    } catch (err) {
+      console.error(err);
+      done(err);
+    }
+  }
+);
+
 async function schedulePush({
   // data,
   dropId,
