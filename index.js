@@ -396,7 +396,8 @@ agenda.define(JOBNAMES.SCHEDULE, async (job: Agenda.Job<any>, done) => {
 agenda.define(
   JOBNAMES.DROP_SUBSCRIPTION,
   async (job: Agenda.Job<any>, done) => {
-    const { _id: dropId, seller: sellerId } = job.attrs.data;
+    const { _id: dropId, seller: sellerId } = job.attrs.data.drop;
+    const { sub } = job.attrs.data;
 
     try {
       if (!sellerId) {
@@ -414,31 +415,21 @@ agenda.define(
 
       const notifI18n = `@${seller.username} ${i18n.sellerDropIsAboutToDrop}`;
 
-      if (drop.subscribers && drop.subscribers.length) {
-        await Promise.all(
-          drop.subscribers.map(subscriber =>
-            Notification.create({
-              dropId,
-              notifI18n,
-              sourceUser: subscriber._id,
-              targetUser: subscriber._id,
-              triggeredBy: subscriber._id,
-              triggeredType: 'DropSubscription',
-            })
-          )
-        );
-        await Promise.all(
-          drop.subscribers.map(subscriber =>
-            schedulePush({
-              dropId,
-              notifI18n,
-              targetUser: subscriber._id,
-              triggeredBy: subscriber._id,
-              triggeredType: 'DropSubscription',
-            })
-          )
-        );
-      }
+      Notification.create({
+        dropId,
+        notifI18n,
+        sourceUser: sub._id,
+        targetUser: sub._id,
+        triggeredBy: sub._id,
+        triggeredType: 'DropSubscription',
+      });
+      schedulePush({
+        dropId,
+        notifI18n,
+        targetUser: sub._id,
+        triggeredBy: sub._id,
+        triggeredType: 'DropSubscription',
+      });
 
       done();
     } catch (err) {
