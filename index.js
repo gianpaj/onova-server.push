@@ -68,6 +68,7 @@ if (error) {
 }
 
 const JOBNAMES = {
+  DROP_SUBSCRIPTION: 'drop-subscription',
   PUSH_COMMENT: 'send-push-comment',
   PUSH_DROP_LISTED: 'send-push-drop-listed',
   PUSH_FOLLOW: 'send-push-follow',
@@ -80,6 +81,7 @@ const JOBNAMES = {
 const i18n = {
   // listedDrop: 'Your drop has been listed',
   listedDrop: 'Ваш Дроп виставлено на продаж',
+  sellerDropIsAboutToDrop: 'дроп скоро в продажу!',
 };
 
 mongoose
