@@ -424,6 +424,7 @@ agenda.define(
         triggeredType: 'DropSubscription',
       });
       schedulePush({
+        data: seller,
         dropId,
         notifI18n,
         targetUser: sub._id,
