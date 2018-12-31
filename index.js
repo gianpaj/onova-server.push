@@ -423,7 +423,7 @@ agenda.define(
         sourceUser: sub._id,
         targetUser: sub._id,
         triggeredBy: sellerId,
-        triggeredType: 'DropSubscription',
+        triggeredType: 'Drop',
       });
 
       // to get latest Push Token
@@ -435,7 +435,7 @@ agenda.define(
         platform: target.platform,
         pushToken: target.pushToken,
         triggeredBy: seller._id,
-        triggeredType: 'DropSubscription',
+        triggeredType: 'Drop',
         senderName: seller.username,
         targetUser: target._id,
         data: seller,
