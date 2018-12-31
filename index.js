@@ -69,6 +69,7 @@ if (error) {
 
 const JOBNAMES = {
   DROP_SUBSCRIPTION: 'drop-subscription',
+  DROP_SUBSCRIPTION_PUSH: 'drop-subscription',
   PUSH_COMMENT: 'send-push-comment',
   PUSH_DROP_LISTED: 'send-push-drop-listed',
   PUSH_FOLLOW: 'send-push-follow',
@@ -420,19 +421,32 @@ agenda.define(
         notifI18n,
         sourceUser: sub._id,
         targetUser: sub._id,
-        triggeredBy: sub._id,
-        triggeredType: 'DropSubscription',
-      });
-      schedulePush({
-        data: seller,
-        dropId,
-        notifI18n,
-        targetUser: sub._id,
-        triggeredBy: sub._id,
+        triggeredBy: sellerId,
         triggeredType: 'DropSubscription',
       });
 
-      done();
+      const target: UserDoc = await User.findById(targetUser);
+      if (!target) throw new Error('Cannot find target');
+
+      const pushData = {
+        message: notifI18n,
+        platform: target.platform,
+        pushToken: target.pushToken,
+        triggeredBy: seller._id,
+        triggeredType: 'DropSubscription',
+        senderName: seller.username,
+        targetUser: target._id,
+        data: seller,
+      };
+
+      const job = agenda.create(JOBNAMES.DROP_SUBSCRIPTION_PUSH, pushData);
+      job.unique({ dropId });
+
+      job.save(err => {
+        if (err) throw new Error(`Job failed with error: ${err}`);
+        logger.info(JOBNAMES.DROP_SUBSCRIPTION_PUSH + ' scheduled');
+        done();
+      });
     } catch (err) {
       console.error(err);
       done(err);
@@ -441,7 +455,7 @@ agenda.define(
 );
 
 async function schedulePush({
-  // data,
+  data,
   dropId,
   notifI18n,
   targetUser,
@@ -463,6 +477,7 @@ async function schedulePush({
       triggeredType,
       senderName: sender.username,
       targetUser: target._id,
+      ...data,
     };
 
     const job = agenda.create(JOBNAMES.PUSH_DROP_LISTED, pushData);

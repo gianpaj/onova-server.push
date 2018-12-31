@@ -1,7 +1,7 @@
 // @flow
 
 export type NotifPayload = {
-  data: {
+  data: ?{
     commentId: ?string,
     productUuid: ?string,
     senderName: ?string,
