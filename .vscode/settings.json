@@ -7,5 +7,8 @@
     "**/coverage": true
   },
   "eslint.enable": true,
-  "prettier.eslintIntegration": true
+  "eslint.packageManager": "yarn",
+  "prettier.eslintIntegration": true,
+  "flow.useNPMPackagedFlow": true,
+  "flow.enabled": false
 }
