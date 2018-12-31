@@ -416,7 +416,7 @@ agenda.define(
 
       const notifI18n = `@${seller.username} ${i18n.sellerDropIsAboutToDrop}`;
 
-      Notification.create({
+      await Notification.create({
         dropId,
         notifI18n,
         sourceUser: sub._id,
