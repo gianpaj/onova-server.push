@@ -69,7 +69,7 @@ if (error) {
 
 const JOBNAMES = {
   DROP_SUBSCRIPTION: 'drop-subscription',
-  DROP_SUBSCRIPTION_PUSH: 'drop-subscription',
+  DROP_SUBSCRIPTION_PUSH: 'drop-subscription-push',
   PUSH_COMMENT: 'send-push-comment',
   PUSH_DROP_LISTED: 'send-push-drop-listed',
   PUSH_FOLLOW: 'send-push-follow',
@@ -345,6 +345,7 @@ agenda.define(JOBNAMES.PUSH_MSG, (job, done) => {
       console.error(e);
     });
 });
+agenda.define(JOBNAMES.DROP_SUBSCRIPTION_PUSH, sendPush);
 agenda.define(JOBNAMES.PUSH_COMMENT, sendPush);
 agenda.define(JOBNAMES.PUSH_DROP_LISTED, sendPush);
 agenda.define(JOBNAMES.PUSH_FOLLOW, sendPush);
