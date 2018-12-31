@@ -4,7 +4,7 @@ import mongoose from 'mongoose';
 
 const { Schema } = mongoose;
 
-var NotificationSchema = new Schema({
+const NotificationSchema = new Schema({
   data: {
     type: Schema.Types.Mixed,
   },
@@ -30,7 +30,7 @@ var NotificationSchema = new Schema({
   triggeredType: {
     type: Schema.Types.String,
     required: true,
-    enum: ['User', 'Product', 'Order'],
+    enum: ['User', 'Product', 'Order', 'DropSubscription'],
   },
   dateCreated: {
     type: Date,
