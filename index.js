@@ -425,7 +425,8 @@ agenda.define(
         triggeredType: 'DropSubscription',
       });
 
-      const target: UserDoc = await User.findById(targetUser);
+      // to get latest Push Token
+      const target: UserDoc = await User.findById(sub._id);
       if (!target) throw new Error('Cannot find target');
 
       const pushData = {
