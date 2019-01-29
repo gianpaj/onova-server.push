@@ -16,10 +16,7 @@ const UserSchema = new Schema(
       default: 'notverified',
       enum: ['verified', 'notverified', 'banned', 'deleted'],
     },
-    bio: {
-      type: String,
-      maxlength: 300,
-    },
+    bio: String,
     displayName: {
       type: String,
       minlength: 0,
@@ -117,7 +114,6 @@ const UserSchema = new Schema(
     shippingAddress: {
       firstName: String,
       lastName: String,
-      fathersName: String,
       city: String,
       departmentNovaposhta: String,
     },
