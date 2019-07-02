@@ -81,7 +81,9 @@ const JOBNAMES = {
 
 const i18n = {
   // listedDrop: 'Your drop has been listed',
-  listedDrop: 'Ваш Дроп виставлено на продаж',
+  // listedDrop: 'Ваш Дроп виставлено на продаж',
+  // listedDrop: 'Your collection is for sale',
+  listedDrop: 'Вашу колекцію виставлено на продаж',
   sellerDropIsAboutToDrop: 'дроп скоро в продажу!',
 };
 
