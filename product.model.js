@@ -27,19 +27,21 @@ const GeoJSON = new Schema({
   coordinates: [Number],
 });
 
-// from mobileapp (AddProduct.js)
-// categoryIds
-//   { label: 'Clothes', value: 0 },
-//   { label: 'Shoes', value: 1 },
-//   { label: 'Other', value: 2 },
+// from mobileapp (ui.js)
 
-// typeIds
-//   { label: 'Men', value: 0 },
-//   { label: 'Women', value: 1 },
-//   { label: 'Other', value: 2 },
+// categoryIds
+//   { label: 'Clothes-Men', value: 0 },
+//   { label: 'Clothes-Women', value: 1 },
+//   { label: 'Clothes-Shoes', value: 2 },
+//   { label: 'Accessories-Jewelry', value: 10 },
+//   { label: 'Accessories-Bags', value: 11 },
+//   { label: 'Accessories-Accessories', value: 12 },
+//   { label: 'For Home-Forniture', value: 20 },
+//   { label: 'For Home-Art', value: 21 },
+//   { label: 'For Home-Design', value: 22 },
 
 /** @namespace */
-var ProductSchema = new Schema(
+const ProductSchema = new Schema(
   {
     categoryIds: {
       type: [Number],
@@ -58,11 +60,6 @@ var ProductSchema = new Schema(
     dropId: {
       type: Schema.Types.ObjectId,
     },
-    // not being used
-    likes: {
-      type: [Schema.Types.ObjectId],
-      ref: 'User',
-    },
     photoURIs: {
       type: [String],
       // required: true, // added async after the images are uploaded to GSC
@@ -75,6 +72,12 @@ var ProductSchema = new Schema(
     price: {
       type: Schema.Types.Decimal,
       required: true,
+    },
+    quantity: {
+      default: 1,
+      min: 0,
+      required: true,
+      type: Schema.Types.Number,
     },
     reservedDate: Date,
     seller: {
@@ -97,14 +100,14 @@ var ProductSchema = new Schema(
       type: [Number],
       required: true,
     },
+    uuid: {
+      type: String,
+      unique: true, // Unique index
+    },
     weight: {
       type: Number,
       default: 5000, // 5kg
       required: true,
-    },
-    uuid: {
-      type: String,
-      unique: true, // Unique index
     },
   },
   {
@@ -116,13 +119,11 @@ var ProductSchema = new Schema(
 export class ProductDoc /*:: extends Mongoose$Document */ {
   _id: MongoId;
   categoryIds: Array<Number>;
-  comments: Array<MongoId>; // optional
+  comments: ?Array<MongoId>;
   createdAt: Date;
   currency: string;
   description: string;
   dropId: MongoId;
-  likes: Array<MongoId>;
-  photoURIs: Array<string>;
   location: {
     type: string,
     coordinates: {
@@ -131,14 +132,17 @@ export class ProductDoc /*:: extends Mongoose$Document */ {
     },
   };
   locality: string;
+  photoURIs: Array<string>;
   price: number;
+  quantity: number;
   reservedDate: Date;
   seller: string;
   status: string;
-  tags: Array<string>; // optional
-  typeIds: Array<Number>;
-  weight: Number;
+  tags: ?Array<string>;
+  typeIds: ?Array<Number>;
+  updatedAt: Date;
   uuid: string;
+  weight: Number;
 }
 
 export class CommentDoc /*:: extends Mongoose$Document */ {
@@ -165,13 +169,13 @@ ProductSchema.statics = {
     return this.findOne({ uuid })
       .populate({
         path: 'seller',
-        select: 'username accountStatus profilePic',
+        select:
+          'username accountStatus profilePic displayName shippingAddress types',
       })
       .select('-comments')
       .then((product: ProductDoc) => {
-        if (!product) {
-          return Promise.reject();
-        }
+        if (!product) return Promise.reject();
+
         return product;
       })
       .catch(() => {
@@ -186,29 +190,65 @@ ProductSchema.statics = {
    * @param {Object} obj
    * @param {Object} obj.query DB query params
    * @param {Object} obj.projection Limit number of fields to be returned
-   * @param {number} obj.limit Limit number of products to be returned.
+   * @param {number} obj.limit Limit number of products to be returned
+   * @param {Array<string>} obj.sellerTypes
    */
   list({
     query = {},
     projection = {},
     limit = 50,
+    sellerTypes = ['designer'],
   }): Promise<ProductDoc[] | APIError> {
-    return this.find(query, projection)
-      .populate({
-        path: 'seller',
-        select: userPopulateFields,
-      })
-      .sort({ createdAt: -1 })
-      .limit(+limit)
-      .then((products: ProductDoc[]) => products)
-      .catch(error => {
-        console.error(error);
-        const err = new APIError(
-          'Error getting products',
-          httpStatus.INTERNAL_SERVER_ERROR
-        );
-        return Promise.reject(err);
-      });
+    return this.aggregate([
+      { $match: query },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'seller',
+          foreignField: '_id',
+          as: 'references',
+        },
+      },
+      { $match: { 'references.types': { $in: sellerTypes } } },
+      {
+        $project: { ...projection, __v: 0 },
+      },
+      {
+        $project: {
+          categoryIds: 1,
+          createdAt: 1,
+          currency: 1,
+          description: 1,
+          dropId: 1,
+          locality: 1,
+          photoURIs: 1,
+          price: 1,
+          quantity: 1,
+          reservedDate: 1,
+          seller: { $arrayElemAt: ['$references', 0] },
+          status: 1,
+          tags: 1,
+          typeIds: 1,
+          updatedAt: 1,
+          uuid: 1,
+          weight: 1,
+        },
+      },
+      { $sort: { _id: -1 } },
+      { $limit: +limit },
+    ]).then((products: ProductDoc[]) =>
+      products.map(p => ({
+        ...p,
+        seller: {
+          _id: p.seller._id,
+          accountStatus: p.seller.accountStatus,
+          profilePic: p.seller.profilePic,
+          shippingAddress: p.seller.shippingAddress,
+          types: p.seller.types,
+          username: p.seller.username,
+        },
+      }))
+    );
   },
 };
 
@@ -224,6 +264,7 @@ ProductSchema.set('toJSON', {
   transform: (doc, ret) => {
     if (ret.price) ret.price = ret.price.toString();
     delete ret.__v;
+    delete ret.location;
     return ret;
   },
 });
@@ -233,6 +274,7 @@ ProductSchema.set('toJSON', {
 // ProductSchema.index({ status: 1, tags: 1 });
 // ProductSchema.index({ status: 1, photoURIs: 1 });
 // ProductSchema.index({ status: 1, seller: 1 });
+// ProductSchema.index({ location: '2dsphere' });
 // ProductSchema.index({ uuid: 1 }, { unique: true }); // created by `unique` schema setting above
 
 const UNIQUE_RETRIES = 9999;
