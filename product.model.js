@@ -118,6 +118,11 @@ const ProductSchema = new Schema(
 
 export class ProductDoc /*:: extends Mongoose$Document */ {
   _id: MongoId;
+  carted: Array<{
+    quantity: Number,
+    timestamp: Date,
+    orderId: MongoId,
+  }>;
   categoryIds: Array<Number>;
   comments: ?Array<MongoId>;
   createdAt: Date;
@@ -135,7 +140,6 @@ export class ProductDoc /*:: extends Mongoose$Document */ {
   photoURIs: Array<string>;
   price: number;
   quantity: number;
-  reservedDate: Date;
   seller: string;
   status: string;
   tags: ?Array<string>;
@@ -169,8 +173,7 @@ ProductSchema.statics = {
     return this.findOne({ uuid })
       .populate({
         path: 'seller',
-        select:
-          'username accountStatus profilePic displayName shippingAddress types',
+        select: 'username accountStatus profilePic displayName shippingAddress types',
       })
       .select('-comments')
       .then((product: ProductDoc) => {
@@ -193,12 +196,7 @@ ProductSchema.statics = {
    * @param {number} obj.limit Limit number of products to be returned
    * @param {Array<string>} obj.sellerTypes
    */
-  list({
-    query = {},
-    projection = {},
-    limit = 50,
-    sellerTypes = ['designer'],
-  }): Promise<ProductDoc[] | APIError> {
+  list({ query = {}, projection = {}, limit = 50, sellerTypes = ['designer'] }): Promise<ProductDoc[] | APIError> {
     return this.aggregate([
       { $match: query },
       {
