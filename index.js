@@ -80,6 +80,7 @@ const JOBNAMES = {
 };
 
 const i18n = {
+  // TODO: send message based on seller type (for Drop or Onova)
   // listedDrop: 'Your drop has been listed',
   // listedDrop: 'Ваш Дроп виставлено на продаж',
   // listedDrop: 'Your collection is for sale',
@@ -228,19 +229,20 @@ function sendPush(job, done, withSenderName = true) {
       triggeredType,
       title: senderName,
       body: message,
-      priority: 2,
       productUuid,
       extra: data, // for Order notifications
     },
     // priority: 'high',
-    notification: notification,
+    notification: notification, // FIXME:
+    // restrictedPackageName: '',
   });
 
   push.addNotification({
     title: senderName,
     body: message,
-    icon: 'notification_icon',
+    icon: 'ic_stat_ic_notification', // Android
     sound: 'default', // vibrate
+    // click_action: '',
   });
 
   // Specify which registration IDs to deliver the message to
@@ -309,12 +311,14 @@ agenda.define(JOBNAMES.PUSH_MSG, (job, done) => {
           triggeredBy,
           title: senderUser.username,
           body: message,
-          priority: 2,
         },
-        // priority: 'high',
-        notification,
+        priority: 'high',
+        notification, // TODO: make sure we don't send this key for Android
+        // Display Messages (with `notification`): These messages trigger the onMessageReceived() callback only when your app is in foreground
+        // https://stackoverflow.com/questions/37711082/how-to-handle-notification-when-app-in-background-in-firebase
       });
 
+      // FIXME: this adds `notification` key
       push.addNotification({
         title: senderUser.username,
         body: message,
